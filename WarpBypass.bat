@@ -19,8 +19,28 @@ $ProgressPreference = 'SilentlyContinue'
 # Автор: Created By BUSH
 # =========================================================
 
-$AppVersion = "4.4"
+$AppVersion = "4.5"
 $RepoRawUrl = "https://raw.githubusercontent.com/rydve/WarpBypass/main/WarpBypass.bat"
+
+# ====== БЛОКИРОВКА ЗАМОРОЗКИ КОНСОЛИ (ANTI QUICK-EDIT) ======
+if (-not ("Win32.Win32Console" -as [type])) {
+    $ConsoleCode = @'
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern IntPtr GetStdHandle(int nStdHandle);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
+'@
+    Add-Type -MemberDefinition $ConsoleCode -Name "Win32Console" -Namespace "Win32" | Out-Null
+}
+$StdInputHandle = [Win32.Win32Console]::GetStdHandle(-10) # STD_INPUT_HANDLE
+$ConsoleMode = 0
+if ([Win32.Win32Console]::GetConsoleMode($StdInputHandle, [ref]$ConsoleMode)) {
+    # Отключаем ENABLE_QUICK_EDIT_MODE (0x0040) чтобы скрипт не вис при кликах мыши
+    [Win32.Win32Console]::SetConsoleMode($StdInputHandle, ($ConsoleMode -band -not 0x0040))
+}
+# ============================================================
 
 $StorageDir = "$env:LOCALAPPDATA\WarpBypass"
 if (-not (Test-Path $StorageDir)) { New-Item -ItemType Directory -Path $StorageDir -Force | Out-Null }
@@ -32,6 +52,12 @@ $WarpCli = "C:\Program Files\Cloudflare\Cloudflare WARP\warp-cli.exe"
 
 $ConfigPath = "$StorageDir\config.json"
 $PingListPath = "$StorageDir\ping_list.txt"
+
+# Агрессивная пре-зачистка старых сессий (Force Restart при повторном или аварийном запуске)
+Stop-Process -Name "winws" -Force -ErrorAction SilentlyContinue
+Stop-Process -Name "Cloudflare WARP" -Force -ErrorAction SilentlyContinue
+if (Test-Path $WarpCli) { & $WarpCli --accept-tos disconnect 2>$null | Out-Null }
+Clear-Host
 
 $DefaultConfig = @{ AutoPreset = $false; LastPreset = ""; AutoPing = $true; DnsFix = $false; IgnoredVersion = "0.0"; AutoUpdate = $true }
 
@@ -57,19 +83,16 @@ if (-not (Test-Path $PingListPath)) {
 
 function Save-Config { $Config | ConvertTo-Json | Set-Content $ConfigPath }
 
-Stop-Process -Name "Cloudflare WARP" -Force -ErrorAction SilentlyContinue
-Clear-Host
-
 $Logo = @'
 =========================================================
  _    _                     _                                
-| |  | |                   | |                               
-| |  | | __ _ _ __ _ __    | |__  _   _ _ __   __ _ ___ ___  
-| |/\ |/ _` | '__| '_ \   | '_ \| | | | '_ \ / _` / __/ __|
-\  /\  / (_| | |  | |_) )  | |_) | |_| | |_) | (_| \__ \__ \ 
- \/  \/ \__,_|_|  | .__/   |_.__/ \__, | .__/ \__,_|___/___/ 
-                  | |              __/ | |                   
-                  |_|             |___/|_|                   
+| |  | |                  | |                               
+| |  | | __ _ _ __ _ __   | |__  _   _ _ __   __ _ ___ ___  
+| |/\ |/ _` | '__| '_ \   | '_ \| | | | '_ \ / _` / __/ __| 
+\  /\  / (_| | |  | |_) ) | |_) | |_| | |_) | (_| \__ \__ \ 
+ \/  \/ \__,_|_|  | .__/  |_.__/ \__, | .__/ \__,_|___/___/ 
+                  | |             __/ | |                   
+                  |_|            |___/|_|                   
 =========================================================
 '@
 
@@ -230,6 +253,11 @@ function Launch-Tunnel ($BatFile) {
             Start-Sleep -Seconds 2
         } catch { Write-Host "Критическая ошибка: Сбой при инсталляции Cloudflare WARP." -ForegroundColor Red; Pause; Exit }
     }
+
+    # ФИКС: Переводим тип запуска службы ВАРПа в режим "Вручную" (Manual)
+    # Защищает систему от падения интернета после внезапных крашей питания и перезагрузок ПК.
+    Write-Host "-> Настройка параметров системной службы..." -ForegroundColor Yellow
+    Set-Service -Name "Cloudflare WARP" -StartupType Manual -ErrorAction SilentlyContinue
 
     Write-Host "-> Перезапуск системной службы Cloudflare WARP..." -ForegroundColor Yellow
     Stop-Service -Name "Cloudflare WARP" -Force -ErrorAction SilentlyContinue
