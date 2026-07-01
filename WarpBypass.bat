@@ -20,8 +20,8 @@ $WarningPreference = 'SilentlyContinue'
 # Author: BUSH
 # =========================================================
 
-$AppVersion = "4.5"
-$RepoRawUrl = "https://raw.githubusercontent.com/BushHub/WarpBypass/main/WarpBypass.bat"
+$AppVersion = "4.6"
+$RepoApiUrl = "https://api.github.com/repos/BushHub/WarpBypass/releases/latest"
 
 # Disable console Quick-Edit mode
 try {
@@ -89,7 +89,7 @@ function Save-Config { $Config | ConvertTo-Json | Set-Content $ConfigPath }
 
 $Logo = @'
 =========================================================
- _    _                     _                                
+ _    _                    _                                
 | |  | |                  | |                               
 | |  | | __ _ _ __ _ __   | |__  _   _ _ __   __ _ ___ ___  
 | |/\ |/ _` | '__| '_ \   | '_ \| | | | '_ \ / _` / __/ __| 
@@ -113,46 +113,50 @@ function Check-AppUpdate {
     
     try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor [Net.SecurityProtocolType]::Tls13
-        $RemoteCode = Invoke-RestMethod -Uri $RepoRawUrl -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+        $ReleaseInfo = Invoke-RestMethod -Uri $RepoApiUrl -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
 
-        if ($RemoteCode -match '(?i)\$AppVersion\s*=\s*"([\d\.]+)"') {
-            $RemoteVersionStr = $matches[1]
-            $RemoteVerNum = [double]::Parse($RemoteVersionStr, [cultureinfo]::InvariantCulture)
-            $LocalVerNum = [double]::Parse($AppVersion, [cultureinfo]::InvariantCulture)
+        # Парсим тег релиза (например "v4.6" превращаем в "4.6")
+        $RemoteVersionStr = $ReleaseInfo.tag_name -replace '(?i)^v', ''
+        $RemoteVerNum = [double]::Parse($RemoteVersionStr, [cultureinfo]::InvariantCulture)
+        $LocalVerNum = [double]::Parse($AppVersion, [cultureinfo]::InvariantCulture)
 
-            if ($RemoteVerNum -gt $LocalVerNum -and $Config.IgnoredVersion -ne $RemoteVersionStr) {
-                Write-Host ""
-                Write-Host "=========================================================" -ForegroundColor Yellow
-                Write-Host " Доступен новый релиз WarpBypass: v$RemoteVersionStr (Текущая: v$AppVersion)" -ForegroundColor Green
-                Write-Host "=========================================================" -ForegroundColor Yellow
-                $UpdateChoice = Read-Host "Инициировать процесс обновления прямо сейчас? (Y/N)"
+        if ($RemoteVerNum -gt $LocalVerNum -and $Config.IgnoredVersion -ne $RemoteVersionStr) {
+            Write-Host ""
+            Write-Host "=========================================================" -ForegroundColor Yellow
+            Write-Host " Доступен новый релиз WarpBypass: v$RemoteVersionStr (Текущая: v$AppVersion)" -ForegroundColor Green
+            Write-Host "=========================================================" -ForegroundColor Yellow
+            $UpdateChoice = Read-Host "Инициировать процесс обновления прямо сейчас? (Y/N)"
+            
+            if ($UpdateChoice -match "^[YyДд]") {
+                Write-Host "-> Загрузка и инсталляция пакета обновления..." -ForegroundColor Cyan
                 
-                if ($UpdateChoice -match "^[YyДд]") {
-                    Write-Host "-> Загрузка и инсталляция пакета обновления..." -ForegroundColor Cyan
-                    $BatPath = $env:WARP_BAT_PATH
-                    $TempFile = "$env:TEMP\WarpBypass_new.bat"
-                    $UpdaterBat = "$env:TEMP\WarpBypass_updater.bat"
-                    
-                    [IO.File]::WriteAllText($TempFile, $RemoteCode, [System.Text.Encoding]::UTF8)
-                    
-                    $UpdaterCode = "@echo off`nchcp 65001 >nul`ntimeout /t 2 /nobreak >nul`nmove /y `"$TempFile`" `"$BatPath`" >nul`nstart `"`" `"$BatPath`"`ndel `"%~f0`""
-                    [IO.File]::WriteAllText($UpdaterBat, $UpdaterCode, [System.Text.Encoding]::UTF8)
-                    
-                    Start-Process -FilePath $UpdaterBat -WindowStyle Hidden
-                    Exit
-                } else {
-                    $IgnoreChoice = Read-Host "Игнорировать версию $RemoteVersionStr при последующих проверках? (Y/N)"
-                    if ($IgnoreChoice -match "^[YyДд]") {
-                        $Config.IgnoredVersion = $RemoteVersionStr
-                        Save-Config
-                        Write-Host "-> Версия $RemoteVersionStr внесена в список исключений." -ForegroundColor DarkGray
-                        Start-Sleep -Seconds 1
-                    }
+                # Скачиваем скрипт, жестко привязанный к тегу релиза, чтобы избежать ошибок из main
+                $DownloadUrl = "https://raw.githubusercontent.com/BushHub/WarpBypass/$($ReleaseInfo.tag_name)/WarpBypass.bat"
+                $RemoteCode = Invoke-RestMethod -Uri $DownloadUrl -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop
+                
+                $BatPath = $env:WARP_BAT_PATH
+                $TempFile = "$env:TEMP\WarpBypass_new.bat"
+                $UpdaterBat = "$env:TEMP\WarpBypass_updater.bat"
+                
+                [IO.File]::WriteAllText($TempFile, $RemoteCode, [System.Text.Encoding]::UTF8)
+                
+                $UpdaterCode = "@echo off`nchcp 65001 >nul`ntimeout /t 2 /nobreak >nul`nmove /y `"$TempFile`" `"$BatPath`" >nul`nstart `"`" `"$BatPath`"`ndel `"%~f0`""
+                [IO.File]::WriteAllText($UpdaterBat, $UpdaterCode, [System.Text.Encoding]::UTF8)
+                
+                Start-Process -FilePath $UpdaterBat -WindowStyle Hidden
+                Exit
+            } else {
+                $IgnoreChoice = Read-Host "Игнорировать версию $RemoteVersionStr при последующих проверках? (Y/N)"
+                if ($IgnoreChoice -match "^[YyДд]") {
+                    $Config.IgnoredVersion = $RemoteVersionStr
+                    Save-Config
+                    Write-Host "-> Версия $RemoteVersionStr внесена в список исключений." -ForegroundColor DarkGray
+                    Start-Sleep -Seconds 1
                 }
             }
         }
     } catch {
-        Write-Host "-> Ошибка синхронизации с репозиторием. Сервер недоступен." -ForegroundColor DarkGray
+        Write-Host "-> Ошибка синхронизации с GitHub API. Сервер недоступен." -ForegroundColor DarkGray
         Start-Sleep -Seconds 1
     }
 }
