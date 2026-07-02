@@ -4,7 +4,7 @@
 
 ![Windows Support](https://img.shields.io/badge/OS-Windows_10%20%7C%2011-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Version](https://img.shields.io/badge/Version-4.7-orange)
+![Version](https://img.shields.io/badge/Version-4.7.1-orange)
 ![Author](https://img.shields.io/badge/Author-rydve-magenta)
 
 **WarpBypass** — это удобный инструмент для автоматизации сетевых подключений и оптимизации маршрутизации трафика. Утилита обеспечивает стабильный, быстрый и бесперебойный доступ к глобальным ресурсам через протокол Cloudflare WARP, используя продвинутые методы маскировки сетевых пакетов для предотвращения разрывов соединения.
