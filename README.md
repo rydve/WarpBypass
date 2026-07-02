@@ -1,11 +1,17 @@
 # WarpBypass
 
 <img src=".github/assets/banner.png" alt="WarpBypass Banner" width="100%">
-
-![Windows Support](https://img.shields.io/badge/OS-Windows_10%20%7C%2011-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Version](https://img.shields.io/badge/Version-4.7.1-orange)
-![Author](https://img.shields.io/badge/Author-rydve-magenta)
+<p align="center">
+  <a href="https://github.com/BushHub/WarpBypass/releases/latest"><img src="https://img.shields.io/github/v/release/BushHub/WarpBypass?style=for-the-badge&logo=github&color=blue" alt="Latest Release"></a>
+  <a href="https://github.com/BushHub/WarpBypass/releases"><img src="https://img.shields.io/github/downloads/BushHub/WarpBypass/total?style=for-the-badge&logo=github&color=brightgreen" alt="Total Downloads"></a>
+  <a href="https://github.com/BushHub/WarpBypass/stargazers"><img src="https://img.shields.io/github/stars/BushHub/WarpBypass?style=for-the-badge&logo=github&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/BushHub/WarpBypass/issues"><img src="https://img.shields.io/github/issues/BushHub/WarpBypass?style=for-the-badge&logo=github&color=orange" alt="Issues"></a>
+  <a href="https://github.com/BushHub/WarpBypass/blob/main/LICENSE"><img src="https://img.shields.io/github/license/BushHub/WarpBypass?style=for-the-badge&color=blueviolet" alt="License"></a>
+  <img src="https://img.shields.io/badge/OS-Windows%2010%20%7C%2011-0078D6?style=for-the-badge&logo=windows" alt="Windows Support">
+  <a href="https://github.com/rydve"><img src="https://img.shields.io/badge/Author-rydve-9c27b0?style=for-the-badge&logo=github" alt="Author rydve"></a>
+  <a href="https://t.me/bushsquad"><img src="https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram Community"></a>
+  <a href="https://discord.gg/ebush"><img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord Server"></a>
+</p>
 
 **WarpBypass** — это удобный инструмент для автоматизации сетевых подключений и оптимизации маршрутизации трафика. Утилита обеспечивает стабильный, быстрый и бесперебойный доступ к глобальным ресурсам через протокол Cloudflare WARP, используя продвинутые методы маскировки сетевых пакетов для предотвращения разрывов соединения.
 
