@@ -1,0 +1,13 @@
+root = true
+
+[*]
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{bat,ps1,cmd}]
+charset = utf-8
+end_of_line = crlf
+
+[*.md]
+end_of_line = lf
