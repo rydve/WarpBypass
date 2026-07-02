@@ -1,6 +1,6 @@
 ﻿<# : RUN
 @echo off
-title WarpBypass v4.6 by BUSH
+title WarpBypass v4.7 by BUSH
 cd /d "%~dp0"
 net session >nul 2>&1
 if %errorLevel% neq 0 (
